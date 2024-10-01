@@ -29,7 +29,6 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
 import { FaSun, FaMoon } from 'react-icons/fa';
-
 import Payment from './components/Payment';
 import mapboxgl from 'mapbox-gl'; // Importing mapbox for map-based location selection
 import 'mapbox-gl/dist/mapbox-gl.css'; // Importing Mapbox CSS
@@ -75,6 +74,21 @@ const HomePage = () => {
         showToast("Drop-off Location Set", `Drop-off Location: ${location}`, "success");
       }
     });
+
+    return () => {
+      map.remove();
+    };
+  }, [isSelectingDropoff]);
+
+  const showToast = (title, description, status) => {
+    toast({
+      title: title,
+      description: description,
+      status: status,
+      duration: 5000,
+      isClosable: true,
+    });
+  };
 
   const handleFindRide = () => {
     let fare = rideType === 'economy' ? 15 : 25;
@@ -235,59 +249,60 @@ const HomePage = () => {
             </Button>
           </VStack>
         </Box>
-        <Box w={{ base: '100%', md: '50%' }} h="400px" id="map" bg="black" />
+
+        {/* Map Container */}
+        <Box w={{ base: '100%', md: '50%' }} h="500px" p={5}>
+          <Box id="map" h="100%" />
+        </Box>
       </Flex>
 
-      {/* Modals */}
+      {/* Modal for Chat */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Chat with Driver</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text>Your messages will appear here...</Text>
-            <Input placeholder="Type your message..." aria-label="Type your message" />
+            <Text>Start a conversation with your driver here!</Text>
+            <Input placeholder="Type your message..." />
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={onClose}>
+            <Button colorScheme="teal" mr={3}>
               Send
             </Button>
-            <Button variant="ghost" onClick={onClose}>Close</Button>
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
+      {/* Modal for Loyalty Program */}
       <Modal isOpen={isLoyaltyOpen} onClose={onLoyaltyClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Loyalty Program</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text aria-live="polite">You have {loyaltyPoints} loyalty points.</Text>
-            <Text aria-live="polite">Redeem 50 points for a $5 discount on your next ride.</Text>
+            <Text>Your Loyalty Points: {loyaltyPoints}</Text>
+            <Button
+              onClick={handleRedeemPoints}
+              colorScheme="teal"
+              isDisabled={loyaltyPoints < 50}
+              mt={4}
+            >
+              Redeem 50 Points for $5 Discount
+            </Button>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" onClick={handleRedeemPoints}>
-              Redeem Points
+            <Button variant="ghost" onClick={onLoyaltyClose}>
+              Close
             </Button>
-            <Button variant="ghost" onClick={onLoyaltyClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      {/* Footer */}
-      <Box as="footer" bg="teal.500" color="white" p={4} mt={10}>
-        <Flex align="center" justify="space-between">
-          <Text>&copy; 2024 Ride Sharing App. All Rights Reserved.</Text>
-          <HStack spacing={4}>
-            <Button variant="link" color="white" aria-label="Privacy Policy">Privacy Policy</Button>
-            <Button variant="link" color="white" aria-label="Terms of Service">Terms of Service</Button>
-            <Button variant="link" color="white" aria-label="Contact Us">Contact Us</Button>
-          </HStack>
-        </Flex>
-      </Box>
     </Box>
-  )
+  );
 };
 
 export default HomePage;
