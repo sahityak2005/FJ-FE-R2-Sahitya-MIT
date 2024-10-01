@@ -301,13 +301,20 @@ const HomePage = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-                {/* Footer */}
-      <Box as="footer" py={4} bg="gray.700" color="white" textAlign="center">
-        <Text>&copy; {new Date().getFullYear()} Ride Sharing App. All Rights Reserved.</Text>
+             {/* Footer */}
+      <Box as="footer" bg="teal.500" color="white" p={4} mt={10}>
+        <Flex align="center" justify="space-between">
+          <Text>&copy; 2024 Ride Sharing App. All Rights Reserved.</Text>
+          <HStack spacing={4}>
+            <Button variant="link" color="white" aria-label="Privacy Policy">Privacy Policy</Button>
+            <Button variant="link" color="white" aria-label="Terms of Service">Terms of Service</Button>
+            <Button variant="link" color="white" aria-label="Contact Us">Contact Us</Button>
+          </HStack>
+        </Flex>
       </Box>
-    </Box>
     </Box>
   );
 };
 
 export default HomePage;
+
