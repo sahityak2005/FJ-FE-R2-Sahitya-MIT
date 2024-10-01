@@ -29,7 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
 import { FaSun, FaMoon } from 'react-icons/fa';
-import annyang from 'annyang'; // Importing annyang for voice commands
+
 import Payment from './components/Payment';
 import mapboxgl from 'mapbox-gl'; // Importing mapbox for map-based location selection
 import 'mapbox-gl/dist/mapbox-gl.css'; // Importing Mapbox CSS
@@ -75,56 +75,6 @@ const HomePage = () => {
         showToast("Drop-off Location Set", `Drop-off Location: ${location}`, "success");
       }
     });
-
-    // Speech Recognition Setup
-    if (annyang) {
-      const commands = {
-        'set pickup to *location': (location) => {
-          setPickupLocation(location);
-          showToast("Pickup Location Set", `Pickup Location: ${location}`, "success");
-        },
-        'set dropoff to *location': (location) => {
-          setDropoffLocation(location);
-          showToast("Drop-off Location Set", `Drop-off Location: ${location}`, "success");
-        },
-        'choose ride type *type': (type) => {
-          setRideType(type);
-          showToast("Ride Type Selected", `Ride Type: ${type}`, "success");
-        },
-        'find ride': () => {
-          handleFindRide();
-        },
-        'share ride': () => {
-          setIsRideSharing(true);
-          showToast("Ride Sharing", "Ride Sharing enabled.", "success");
-        },
-        'number of sharers *number': (number) => {
-          setNumberOfSharers(Number(number));
-          showToast("Number of Sharers Set", `Number of Sharers: ${number}`, "success");
-        },
-      };
-
-      annyang.addCommands(commands);
-      annyang.start();
-    }
-
-    return () => {
-      map.remove();
-      if (annyang) {
-        annyang.abort(); // Stop listening when component unmounts
-      }
-    };
-  }, [isSelectingDropoff]);
-
-  const showToast = (title, description, status) => {
-    toast({
-      title: title,
-      description: description,
-      status: status,
-      duration: 5000,
-      isClosable: true,
-    });
-  };
 
   const handleFindRide = () => {
     let fare = rideType === 'economy' ? 15 : 25;
