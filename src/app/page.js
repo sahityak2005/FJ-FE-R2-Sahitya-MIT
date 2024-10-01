@@ -301,7 +301,8 @@ const HomePage = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-             {/* Footer */}
+
+      {/* Footer */}
       <Box as="footer" bg="teal.500" color="white" p={4} mt={10}>
         <Flex align="center" justify="space-between">
           <Text>&copy; 2024 Ride Sharing App. All Rights Reserved.</Text>
@@ -317,4 +318,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
 
