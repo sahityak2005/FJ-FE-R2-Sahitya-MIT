@@ -301,6 +301,11 @@ const HomePage = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+                {/* Footer */}
+      <Box as="footer" py={4} bg="gray.700" color="white" textAlign="center">
+        <Text>&copy; {new Date().getFullYear()} Ride Sharing App. All Rights Reserved.</Text>
+      </Box>
+    </Box>
     </Box>
   );
 };
