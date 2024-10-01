@@ -29,6 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
 import { FaSun, FaMoon } from 'react-icons/fa';
+import annyang from 'annyang'; // Importing annyang for voice commands
 import Payment from './components/Payment';
 import mapboxgl from 'mapbox-gl'; // Importing mapbox for map-based location selection
 import 'mapbox-gl/dist/mapbox-gl.css'; // Importing Mapbox CSS
@@ -75,8 +76,43 @@ const HomePage = () => {
       }
     });
 
+    // Speech Recognition Setup
+    if (annyang) {
+      const commands = {
+        'set pickup to *location': (location) => {
+          setPickupLocation(location);
+          showToast("Pickup Location Set", `Pickup Location: ${location}`, "success");
+        },
+        'set dropoff to *location': (location) => {
+          setDropoffLocation(location);
+          showToast("Drop-off Location Set", `Drop-off Location: ${location}`, "success");
+        },
+        'choose ride type *type': (type) => {
+          setRideType(type);
+          showToast("Ride Type Selected", `Ride Type: ${type}`, "success");
+        },
+        'find ride': () => {
+          handleFindRide();
+        },
+        'share ride': () => {
+          setIsRideSharing(true);
+          showToast("Ride Sharing", "Ride Sharing enabled.", "success");
+        },
+        'number of sharers *number': (number) => {
+          setNumberOfSharers(Number(number));
+          showToast("Number of Sharers Set", `Number of Sharers: ${number}`, "success");
+        },
+      };
+
+      annyang.addCommands(commands);
+      annyang.start();
+    }
+
     return () => {
-      map.remove(); // Clean up map
+      map.remove();
+      if (annyang) {
+        annyang.abort(); // Stop listening when component unmounts
+      }
     };
   }, [isSelectingDropoff]);
 
@@ -160,95 +196,148 @@ const HomePage = () => {
             </Button>
           )}
           <IconButton
+            aria-label="Toggle dark mode"
             icon={colorMode === 'light' ? <FaMoon /> : <FaSun />}
-            aria-label="Toggle Color Mode"
             onClick={toggleColorMode}
-            colorScheme="teal"
+            isRound
           />
         </HStack>
       </Flex>
 
-      {/* Map Container */}
-      <Box id="map" h="400px" />
-
-      {/* Form for Ride Request */}
-      <VStack spacing={4} p={4}>
-        <FormControl>
-          <FormLabel>Pickup Location</FormLabel>
-          <Input
-            placeholder="Enter pickup location or click on map"
-            value={pickupLocation}
-            readOnly
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Drop-off Location</FormLabel>
-          <Input
-            placeholder="Enter drop-off location or click on map"
-            value={dropoffLocation}
-            readOnly
-          />
-        </FormControl>
-        <HStack spacing={4}>
-          <FormControl>
-            <FormLabel>Ride Type</FormLabel>
-            <Select value={rideType} onChange={(e) => setRideType(e.target.value)}>
-              <option value="economy">Economy</option>
-              <option value="luxury">Luxury</option>
-            </Select>
-          </FormControl>
-          <FormControl>
-            <FormLabel>Ride Sharing</FormLabel>
-            <Checkbox
-              isChecked={isRideSharing}
-              onChange={(e) => setIsRideSharing(e.target.checked)}
-            >
-              Share with others
-            </Checkbox>
-            {isRideSharing && (
+      {/* Ride Booking Section */}
+      <Flex p={8} direction={{ base: 'column', md: 'row' }}>
+        <Box w={{ base: '100%', md: '50%' }} p={5}>
+          <Heading size="md" mb={4}>
+            Book a Ride
+          </Heading>
+          <VStack spacing={4} align="stretch">
+            <FormControl id="pickup" isRequired>
+              <FormLabel>Pickup Location</FormLabel>
+              <Input
+                aria-label="Enter pickup location"
+                placeholder="Enter pickup location or click on map"
+                value={pickupLocation}
+                onChange={(e) => setPickupLocation(e.target.value)}
+              />
+              <Button onClick={() => setIsSelectingDropoff(false)} colorScheme="teal">
+                Select Pickup on Map
+              </Button>
+            </FormControl>
+            <FormControl id="dropoff" isRequired>
+              <FormLabel>Drop-off Location</FormLabel>
+              <Input
+                aria-label="Enter drop-off location"
+                placeholder="Enter drop-off location or click on map"
+                value={dropoffLocation}
+                onChange={(e) => setDropoffLocation(e.target.value)}
+              />
+              <Button onClick={() => setIsSelectingDropoff(true)} colorScheme="teal">
+                Select Drop-off on Map
+              </Button>
+            </FormControl>
+            <FormControl id="ride-type" isRequired>
+              <FormLabel>Choose Ride Type</FormLabel>
               <Select
-                value={numberOfSharers}
-                onChange={(e) => setNumberOfSharers(parseInt(e.target.value))}
+                aria-label="Select ride type"
+                placeholder="Select ride type"
+                value={rideType}
+                onChange={(e) => setRideType(e.target.value)}
               >
-                {[...Array(5)].map((_, index) => (
-                  <option key={index} value={index + 1}>{index + 1}</option>
-                ))}
+                <option value="economy">Economy</option>
+                <option value="premium">Premium</option>
               </Select>
-            )}
-          </FormControl>
-        </HStack>
-        <Button colorScheme="teal" onClick={handleFindRide}>
-          Find Ride
-        </Button>
-        <Button colorScheme="blue" onClick={onOpen}>
-          Redeem Loyalty Points
-        </Button>
-        {estimatedFare && <Text>Your estimated fare: ${estimatedFare}</Text>}
-      </VStack>
+            </FormControl>
 
-      {/* Loyalty Points Modal */}
-      <Modal isOpen={isLoyaltyOpen} onClose={onLoyaltyClose}>
+            <FormControl id="ride-sharing">
+              <Checkbox
+                aria-label="Share Ride"
+                isChecked={isRideSharing}
+                onChange={(e) => setIsRideSharing(e.target.checked)}
+              >
+                Share Ride
+              </Checkbox>
+              {isRideSharing && (
+                <Input
+                  type="number"
+                  aria-label="Number of Sharers"
+                  placeholder="Number of Sharers"
+                  value={numberOfSharers}
+                  min={1}
+                  onChange={(e) => setNumberOfSharers(Number(e.target.value))}
+                />
+              )}
+            </FormControl>
+
+            <Text fontSize="lg" color="teal.500" aria-live="polite">
+              Estimated Fare: ${estimatedFare}
+            </Text>
+            <Button colorScheme="teal" width="full" aria-label="Find Ride" onClick={handleFindRide}>
+              Find Ride
+            </Button>
+            {estimatedFare && <Payment amount={estimatedFare} />}
+
+            {/* Chat and Loyalty Buttons */}
+            <Button colorScheme="teal" width="full" aria-label="Chat with Driver" onClick={onOpen}>
+              Chat with Driver
+            </Button>
+            <Button colorScheme="teal" width="full" aria-label="Loyalty Program" onClick={onLoyaltyOpen}>
+              Loyalty Program
+            </Button>
+          </VStack>
+        </Box>
+        <Box w={{ base: '100%', md: '50%' }} h="400px" id="map" bg="black" />
+      </Flex>
+
+      {/* Modals */}
+      <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Redeem Loyalty Points</ModalHeader>
+          <ModalHeader>Chat with Driver</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text>You have {loyaltyPoints} loyalty points.</Text>
-            <Text>Redeem 50 points for a $5 discount?</Text>
+            <Text>Your messages will appear here...</Text>
+            <Input placeholder="Type your message..." aria-label="Type your message" />
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={handleRedeemPoints}>
-              Redeem
+            <Button colorScheme="teal" mr={3} onClick={onClose}>
+              Send
             </Button>
-            <Button variant="ghost" onClick={onLoyaltyClose}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={onClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <Modal isOpen={isLoyaltyOpen} onClose={onLoyaltyClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Loyalty Program</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text aria-live="polite">You have {loyaltyPoints} loyalty points.</Text>
+            <Text aria-live="polite">Redeem 50 points for a $5 discount on your next ride.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" onClick={handleRedeemPoints}>
+              Redeem Points
+            </Button>
+            <Button variant="ghost" onClick={onLoyaltyClose}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Footer */}
+      <Box as="footer" bg="teal.500" color="white" p={4} mt={10}>
+        <Flex align="center" justify="space-between">
+          <Text>&copy; 2024 Ride Sharing App. All Rights Reserved.</Text>
+          <HStack spacing={4}>
+            <Button variant="link" color="white" aria-label="Privacy Policy">Privacy Policy</Button>
+            <Button variant="link" color="white" aria-label="Terms of Service">Terms of Service</Button>
+            <Button variant="link" color="white" aria-label="Contact Us">Contact Us</Button>
+          </HStack>
+        </Flex>
+      </Box>
     </Box>
   );
 };
 
 export default HomePage;
-
