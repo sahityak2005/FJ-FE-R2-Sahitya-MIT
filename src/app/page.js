@@ -287,7 +287,7 @@ const HomePage = () => {
         </Flex>
       </Box>
     </Box>
-  );
+  )
 };
 
 export default HomePage;
